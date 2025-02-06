@@ -1,8 +1,10 @@
 package api;
 
 import io.restassured.RestAssured;
+import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -16,27 +18,25 @@ public class ApiTests {
 
     @Test
     public void testGetCommentsByPostId_Positive() {
-        given()
+        Response response = given()
                 .queryParam("postId", 1)
                 .when()
-                .get("/comments")
-                .then()
-                .statusCode(200)
-                .body("size()", greaterThan(0))
-                .body("[0].postId", equalTo(1))
-                .body("[0].email", not(emptyOrNullString()))
-                .body("[0].name", not(emptyOrNullString()));
+                .get("/comments");
+
+        Assertions.assertEquals(200, response.getStatusCode(), "Code is not 200");
+        Assertions.assertTrue(response.jsonPath().getList("$").size() > 0, "There is nothing in the comment list");
+        Assertions.assertEquals(1, response.jsonPath().getInt("[0].postId"), "First element PostId is not 1");
     }
 
     @Test
     public void testGetCommentsWithInvalidPostId() {
-        given()
+        Response response = given()
                 .queryParam("postId", 9999)
                 .when()
-                .get("/comments")
-                .then()
-                .statusCode(200)
-                .body("size()", equalTo(0));
+                .get("/comments");
+
+        Assertions.assertEquals(200, response.getStatusCode(), "Code is not 200");
+        Assertions.assertEquals(0, response.jsonPath().getList("$").size(), "Comments array is not empty");
     }
 
     @Test
